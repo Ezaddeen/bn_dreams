@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://127.0.0.1:8000", // تأكد أن نفس البورت المستخدم في Laravel
+  baseURL: "https://bn-dream.site", // تأكد أن نفس البورت المستخدم في Laravel
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

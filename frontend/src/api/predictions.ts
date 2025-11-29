@@ -1,7 +1,7 @@
-import axios from "axios";
+import instance from "./axios"; // 🔴🔴🔴 تم التعديل: استخدام المسار الصحيح "./axios"
 
 // 🔹 عنوان الـ API
-const API_URL = "http://localhost:8000/api/predictions";
+const API_URL = "/api/predictions"; // 🔴🔴🔴 تم التعديل: استخدام المسار النسبي
 
 // 🔹 أنواع البيانات
 export interface PredictionData {
@@ -49,7 +49,8 @@ export const postPrediction = async (data: PredictionData) => {
     team2_score: data.team2,          // ✅ مطابق
   };
 
-  const response = await axios.post(API_URL, payload);
+  // 🔴🔴🔴 تم التعديل: استخدام instance
+  const response = await instance.post(API_URL, payload);
   return response.data as { message: string; data: PredictionResponse };
 };
 
@@ -59,7 +60,8 @@ export const postPrediction = async (data: PredictionData) => {
  */
 export const getUserPredictions = async (userId: number) => {
   if (!userId) return []; // ✅ حماية إضافية
-  const response = await axios.get(`${API_URL}/user/${userId}`);
+  // 🔴🔴🔴 تم التعديل: استخدام instance
+  const response = await instance.get(`${API_URL}/user/${userId}`);
   return Array.isArray(response.data) ? response.data : [];
 };
 
@@ -68,6 +70,7 @@ export const getUserPredictions = async (userId: number) => {
  * GET /api/predictions/leaderboard
  */
 export const getLeaderboard = async () => {
-  const response = await axios.get(`${API_URL}/leaderboard`);
+  // 🔴🔴🔴 تم التعديل: استخدام instance
+  const response = await instance.get(`${API_URL}/leaderboard`);
   return Array.isArray(response.data) ? response.data : [];
 };

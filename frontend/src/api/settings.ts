@@ -1,9 +1,8 @@
-// src/api/settings.ts
-import axios, { AxiosResponse } from "axios";
+import instance from "./axios"; // 🔴🔴🔴 تم التعديل: استيراد instance
+import { AxiosResponse } from "axios";
 
-// رابط API
-const API_BASE_URL = "http://127.0.0.1:8000";
-const API_URL = `${API_BASE_URL}/api/settings`;
+// 🔴🔴🔴 تم التعديل: استخدام المسار النسبي
+const API_URL = "/api/settings"; 
 
 // ===============================
 // 🔹 واجهة بيانات الإعدادات العامة
@@ -19,7 +18,8 @@ export interface Settings {
 // 🔹 جلب الإعدادات
 // ===============================
 export const getSettings = async (): Promise<AxiosResponse<Settings>> => {
-  return axios.get<Settings>(API_URL);
+  // 🔴🔴🔴 تم التعديل: استخدام instance
+  return instance.get<Settings>(API_URL);
 };
 
 // ===============================
@@ -28,7 +28,8 @@ export const getSettings = async (): Promise<AxiosResponse<Settings>> => {
 export const updateSettings = async (
   formData: FormData
 ): Promise<AxiosResponse<Settings>> => {
-  return axios.post<Settings>(API_URL, formData, {
+  // 🔴🔴🔴 تم التعديل: استخدام instance
+  return instance.post<Settings>(API_URL, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

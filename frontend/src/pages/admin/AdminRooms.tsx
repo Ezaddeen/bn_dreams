@@ -202,7 +202,7 @@ const AdminRooms = () => {
                 <TableRow key={room.id}>
                   <TableCell>
                     <img
-                      src={`http://localhost:8000/storage/${room.image_path}`}
+                      src={`ظstorage/${room.image_path}`}
                       alt={room.name}
                       className="w-16 h-16 object-cover rounded"
                     />
@@ -344,7 +344,7 @@ const AdminRooms = () => {
                     <Input id="image" type="file" accept="image/*" onChange={handleFileChange} />
                     {editingRoom?.image_path && (
                       <img
-                        src={`http://localhost:8000/storage/${editingRoom.image_path}`}
+                        src={`storage/${editingRoom.image_path}`}
                         alt="Current"
                         className="w-24 h-24 object-cover mt-2 rounded"
                       />

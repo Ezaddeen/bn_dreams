@@ -1,7 +1,6 @@
-// src/api/rooms.ts
-import axios from "axios";
+import instance from "./axios"; // تم التأكد من أن المسار الصحيح هو "./axios"
 
-const API_URL = "http://localhost:8000/api/rooms";
+const API_URL = "/api/rooms";
 
 export interface Room {
   id: number;
@@ -17,21 +16,23 @@ export interface Room {
 
 // 🟢 جلب كل الغرف
 export const getRooms = async (): Promise<Room[]> => {
-  const { data } = await axios.get(API_URL);
+  const { data } = await instance.get(API_URL);
   return data;
 };
 
 // 🟢 تحديث الغرفة
 export const updateRoom = async (id: number, formData: FormData) => {
-  return await axios.post(`${API_URL}/${id}?_method=PUT`, formData);
+  // 🔴🔴🔴 تم إزالة headers
+  return await instance.post(`${API_URL}/${id}?_method=PUT`, formData);
 };
 
 // 🟢 إنشاء غرفة
 export const createRoom = async (formData: FormData) => {
-  return await axios.post(API_URL, formData);
+  // 🔴🔴🔴 تم إزالة headers
+  return await instance.post(API_URL, formData);
 };
 
 // 🟢 حذف غرفة
 export const deleteRoom = async (id: number) => {
-  return await axios.delete(`${API_URL}/${id}`);
+  return await instance.delete(`${API_URL}/${id}`);
 };

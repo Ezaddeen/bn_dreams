@@ -122,7 +122,7 @@ const RoomCard = ({ room }: { room: Room }) => {
           <img
             src={
               room.image_path
-                ? `http://localhost:8000/storage/${room.image_path}`
+                ? `storage/${room.image_path}`
                 : "https://via.placeholder.com/800x600?text=No+Image"
             }
             alt={room.name}
