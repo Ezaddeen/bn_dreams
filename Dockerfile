@@ -21,7 +21,8 @@ WORKDIR /app/backend
 COPY backend/database/ database/
 COPY backend/composer.json backend/composer.lock ./
 # سنقوم بتثبيت كل شيء (بما في ذلك حزم التطوير للسماح بالـ Seeding)
-RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist
+RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist --ignore-platform-reqs
+
 
 # =================================================================
 # المرحلة النهائية: تجميع كل شيء مع خادم Nginx
