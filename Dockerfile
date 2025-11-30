@@ -33,10 +33,7 @@ RUN apk add --no-cache \
     php82-intl php82-mbstring php82-openssl php82-phar \
     php82-session php82-zip
 
-# =================================================================
-# الجزء الجديد والمهم: إعداد PHP-FPM
-# =================================================================
-# هذا يخبر PHP-FPM بأن يعمل في الخلفية ويستمع للطلبات من Nginx
+# إعداد PHP-FPM
 COPY <<EOF /etc/php82/php-fpm.d/www.conf
 [www]
 user = nginx
@@ -50,9 +47,8 @@ pm.start_servers = 2
 pm.min_spare_servers = 1
 pm.max_spare_servers = 3
 EOF
-# =================================================================
 
-# إعداد Nginx (تم تعديله ليشير إلى PHP-FPM بشكل صحيح)
+# إعداد Nginx
 COPY <<EOF /etc/nginx/conf.d/default.conf
 server {
     listen 80;
@@ -66,7 +62,7 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_pass unix:/run/php-fpm/www.sock; # <--- تم التعديل هنا
+        fastcgi_pass unix:/run/php-fpm/www.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
@@ -78,6 +74,17 @@ WORKDIR /var/www/html
 
 # نسخ كود Laravel
 COPY --chown=nginx:nginx backend/ .
+
+# =================================================================
+# الحل الأخير: كتابة بيانات الاتصال مباشرة في ملف .env
+# تم استخدام الرابط الذي أرسلته
+# =================================================================
+RUN echo "DB_CONNECTION=mysql" >> .env && \
+    echo "DATABASE_URL=mysql://root:ISxxihuBeOZwyafyeOZCZWyMvuUCsvVR@turntable.proxy.rlwy.net:52234/railway" >> .env && \
+    echo "APP_KEY=base64:dummykeyforthebuildprocess12345=" >> .env && \
+    echo "APP_ENV=production" >> .env
+# =================================================================
+
 # نسخ مجلد vendor
 COPY --chown=nginx:nginx --from=backend-vendor /app/backend/vendor/ ./vendor/
 # نسخ مجلد build الخاص بـ React
