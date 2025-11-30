@@ -30,7 +30,7 @@ RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist --
 FROM nginx:1.25-alpine
 
 # تثبيت PHP وملحقاته
-RUN apk add --no-cache \
+RUN RUN apk add --no-cache \
     php82 php82-fpm php82-pdo php82-pdo_mysql php82-tokenizer \
     php82-xml php82-ctype php82-curl php82-dom php82-gd \
     php82-intl php82-mbstring php82-openssl php82-phar \
