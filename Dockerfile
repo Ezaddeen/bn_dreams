@@ -1,92 +1,67 @@
 # =================================================================
-# المرحلة الأولى: بناء الواجهة الأمامية (React)
+# المرحلة الأولى: بناء الاعتماديات
 # =================================================================
-FROM node:18-alpine AS frontend-builder
+FROM composer:2.5 AS vendor
 
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm install
-COPY frontend/ ./
-ARG VITE_API_URL
-ENV VITE_API_URL=${VITE_API_URL}
-RUN npm run build
-
-# =================================================================
-# المرحلة الثانية: بناء الواجهة الخلفية (Laravel)
-# =================================================================
-FROM composer:2 AS backend-vendor
-
-WORKDIR /app/backend
+WORKDIR /app
 COPY backend/database/ database/
-COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-interaction --no-plugins --no-scripts --prefer-dist --ignore-platform-reqs
+COPY backend/composer.json composer.json
+COPY backend/composer.lock composer.lock
+RUN composer install --no-dev --no-interaction --no-plugins --no-scripts --prefer-dist
 
 # =================================================================
-# المرحلة النهائية: تجميع كل شيء مع خادم Nginx
+# المرحلة النهائية: بناء صورة التشغيل
 # =================================================================
 FROM nginx:1.25-alpine
 
-# تثبيت PHP وملحقاته
-RUN apk add --no-cache \
-    php82 php82-fpm php82-pdo php82-pdo_mysql php82-tokenizer \
-    php82-xml php82-ctype php82-curl php82-dom php82-gd \
-    php82-intl php82-mbstring php82-openssl php82-phar \
-    php82-session php82-zip
+# تثبيت PHP وملحقاته الأساسية
+RUN apk add --no-cache php82-fpm php82-pdo php82-pdo_mysql php82-xml php82-dom php82-mbstring php82-tokenizer php82-ctype php82-curl php82-session
 
-# =================================================================
-# الجزء المعدل: إعداد PHP-FPM للاستماع على منفذ TCP
-# =================================================================
-COPY <<EOF /etc/php82/php-fpm.d/www.conf
-[www]
-user = nginx
-group = nginx
-listen = 127.0.0.1:9000  # <--- تم التعديل هنا
-pm = dynamic
-pm.max_children = 5
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
-EOF
-# =================================================================
-
-# =================================================================
-# الجزء المعدل: إعداد Nginx للتحدث مع PHP-FPM عبر منفذ TCP
-# =================================================================
+# إعداد Nginx
 COPY <<EOF /etc/nginx/conf.d/default.conf
 server {
     listen 80;
     server_name localhost;
     root /var/www/html/public;
     index index.php;
-    charset utf-8;
 
     location / {
-        try_files \$uri \$uri/ /index.html;
+        try_files \$uri \$uri/ /index.php?\$query_string;
     }
 
     location ~ \.php$ {
-        fastcgi_pass 127.0.0.1:9000; # <--- تم التعديل هنا
+        fastcgi_pass 127.0.0.1:9000;
         fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        fastcgi_param PATH_INFO \$fastcgi_path_info;
     }
 }
 EOF
-# =================================================================
+
+# إعداد PHP-FPM
+COPY <<EOF /etc/php82/php-fpm.d/www.conf
+[www]
+user = nginx
+group = nginx
+listen = 127.0.0.1:9000
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+EOF
 
 WORKDIR /var/www/html
 
 # نسخ كود Laravel
 COPY --chown=nginx:nginx backend/ .
-
-# نسخ مجلد vendor
-COPY --chown=nginx:nginx --from=backend-vendor /app/backend/vendor/ ./vendor/
-# نسخ مجلد build الخاص بـ React
-COPY --chown=nginx:nginx --from=frontend-builder /app/frontend/dist ./public/
+# نسخ مجلد vendor الجاهز
+COPY --chown=nginx:nginx --from=vendor /app/vendor/ ./vendor/
 
 # تعديل الصلاحيات
 RUN chown -R nginx:nginx /var/www/html && \
-    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+    chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# تشغيل Nginx و PHP-FPM
+# تشغيل الخدمات
 CMD sh -c "php-fpm82 && nginx -g 'daemon off;'"
