@@ -33,22 +33,25 @@ RUN apk add --no-cache \
     php82-intl php82-mbstring php82-openssl php82-phar \
     php82-session php82-zip
 
-# إعداد PHP-FPM
+# =================================================================
+# الجزء المعدل: إعداد PHP-FPM للاستماع على منفذ TCP
+# =================================================================
 COPY <<EOF /etc/php82/php-fpm.d/www.conf
 [www]
 user = nginx
 group = nginx
-listen = /run/php-fpm/www.sock
-listen.owner = nginx
-listen.group = nginx
+listen = 127.0.0.1:9000  # <--- تم التعديل هنا
 pm = dynamic
 pm.max_children = 5
 pm.start_servers = 2
 pm.min_spare_servers = 1
 pm.max_spare_servers = 3
 EOF
+# =================================================================
 
-# إعداد Nginx
+# =================================================================
+# الجزء المعدل: إعداد Nginx للتحدث مع PHP-FPM عبر منفذ TCP
+# =================================================================
 COPY <<EOF /etc/nginx/conf.d/default.conf
 server {
     listen 80;
@@ -62,28 +65,19 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_pass unix:/run/php-fpm/www.sock;
+        fastcgi_pass 127.0.0.1:9000; # <--- تم التعديل هنا
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
     }
 }
 EOF
+# =================================================================
 
 WORKDIR /var/www/html
 
 # نسخ كود Laravel
 COPY --chown=nginx:nginx backend/ .
-
-# =================================================================
-# الحل الأخير: كتابة بيانات الاتصال مباشرة في ملف .env
-# تم استخدام الرابط الذي أرسلته
-# =================================================================
-RUN echo "DB_CONNECTION=mysql" >> .env && \
-    echo "DATABASE_URL=mysql://root:ISxxihuBeOZwyafyeOZCZWyMvuUCsvVR@turntable.proxy.rlwy.net:52234/railway" >> .env && \
-    echo "APP_KEY=base64:dummykeyforthebuildprocess12345=" >> .env && \
-    echo "APP_ENV=production" >> .env
-# =================================================================
 
 # نسخ مجلد vendor
 COPY --chown=nginx:nginx --from=backend-vendor /app/backend/vendor/ ./vendor/
@@ -91,8 +85,7 @@ COPY --chown=nginx:nginx --from=backend-vendor /app/backend/vendor/ ./vendor/
 COPY --chown=nginx:nginx --from=frontend-builder /app/frontend/dist ./public/
 
 # تعديل الصلاحيات
-RUN mkdir -p /run/php-fpm && \
-    chown -R nginx:nginx /var/www/html /run/php-fpm && \
+RUN chown -R nginx:nginx /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # تشغيل Nginx و PHP-FPM
